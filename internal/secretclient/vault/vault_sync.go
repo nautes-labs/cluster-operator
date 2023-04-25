@@ -44,7 +44,7 @@ type SyncAuthResult struct {
 
 func (vc *VaultClient) Delete(ctx context.Context, cluster *nautescrd.Cluster) error {
 	ctx = context.WithValue(ctx, CONTEXT_KEY_CFG, *vc.Configs)
-	defer vc.logout()
+	defer vc.Logout()
 
 	err := vc.deleteCluster(ctx, cluster)
 	if err != nil {
@@ -55,7 +55,7 @@ func (vc *VaultClient) Delete(ctx context.Context, cluster *nautescrd.Cluster) e
 
 func (vc *VaultClient) Sync(ctx context.Context, cluster, lastCluster *nautescrd.Cluster) (*secretclient.SyncResult, error) {
 	ctx = context.WithValue(ctx, CONTEXT_KEY_CFG, *vc.Configs)
-	defer vc.logout()
+	defer vc.Logout()
 
 	if cluster.Name == vc.TenantAuthName {
 		return nil, fmt.Errorf("tenant cluster can not be modified")

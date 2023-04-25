@@ -200,3 +200,9 @@ func (m mockSyncer) Sync(ctx context.Context, cluster, lastCluster *clustercrd.C
 func (m mockSyncer) Delete(ctx context.Context, cluster *clustercrd.Cluster) error {
 	return wantErr
 }
+
+func (m mockSyncer) GetKubeConfig(ctx context.Context, cluster *clustercrd.Cluster) (string, error) {
+	return "", nil
+}
+
+func (m mockSyncer) Logout() {}

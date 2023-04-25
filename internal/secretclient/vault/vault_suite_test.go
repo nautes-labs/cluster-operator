@@ -27,11 +27,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	vaultclient "github.com/nautes-labs/cluster-operator/internal/secretclient/vault"
+	vproxy "github.com/nautes-labs/cluster-operator/internal/vaultproxy"
 	kubeClientMock "github.com/nautes-labs/cluster-operator/mock/kubeclient"
 	vproxyMock "github.com/nautes-labs/cluster-operator/mock/vaultproxy"
 	nautescrd "github.com/nautes-labs/pkg/api/v1alpha1"
 	configs "github.com/nautes-labs/pkg/pkg/nautesconfigs"
-	vproxy "github.com/nautes-labs/vault-proxy/api/vaultproxy/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -116,10 +116,13 @@ func initMock() {
 				"kubeconfig": req.GetAccount().Kubeconfig,
 			})
 			Expect(err).Should(BeNil())
+
 			return &vproxy.CreateClusterReply{
-				SecretName:    cluster.SecretName,
-				SecretPath:    cluster.SecretPath,
-				SecretVersion: int32(sec.VersionMetadata.Version),
+				Secret: &vproxy.SecretInfo{
+					Name:    cluster.SecretName,
+					Path:    cluster.SecretPath,
+					Version: int32(sec.VersionMetadata.Version),
+				},
 			}, nil
 		})
 	secClient.EXPECT().DeleteCluster(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
@@ -148,7 +151,7 @@ func initMock() {
 			opts := map[string]interface{}{
 				"kubernetes_host":    req.Kubernetes.Url,
 				"kubernetes_ca_cert": req.Kubernetes.Cabundle,
-				"token_reviewer_jwt": req.Kubernetes.Usertoken,
+				"token_reviewer_jwt": req.Kubernetes.Token,
 			}
 			_, err = vaultRawClient.Logical().Write(configPath, opts)
 			Expect(err).Should(BeNil())
@@ -167,7 +170,7 @@ func initMock() {
 			path := fmt.Sprintf("auth/%s/role/%s", req.ClusterName, req.DestUser)
 			opts := map[string]interface{}{
 				"bound_service_account_namespaces": req.GetK8S().Namespaces,
-				"bound_service_account_names":      req.GetK8S().Serviceaccounts,
+				"bound_service_account_names":      req.GetK8S().ServiceAccounts,
 			}
 			_, err := vaultRawClient.Logical().Write(path, opts)
 			Expect(err).Should(BeNil())
