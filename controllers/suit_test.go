@@ -29,6 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -70,7 +72,8 @@ var _ = BeforeSuite(func() {
 		ErrorIfCRDPathMissing: true,
 	}
 
-	cfg, err := testEnv.Start()
+	var err error
+	cfg, err = testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
@@ -134,7 +137,7 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-func WaitForCondition(target *clustercrd.Cluster, startTime time.Time) (*metav1.Condition, error) {
+func WaitForCondition(target *clustercrd.Cluster, startTime time.Time, conditionType string) (*metav1.Condition, error) {
 	cluster := &clustercrd.Cluster{}
 	var err error
 
@@ -149,7 +152,7 @@ func WaitForCondition(target *clustercrd.Cluster, startTime time.Time) (*metav1.
 
 		conditions := cluster.Status.GetConditions(
 			map[string]bool{
-				clusterConditionType: true,
+				conditionType: true,
 			},
 		)
 
@@ -202,7 +205,35 @@ func (m mockSyncer) Delete(ctx context.Context, cluster *clustercrd.Cluster) err
 }
 
 func (m mockSyncer) GetKubeConfig(ctx context.Context, cluster *clustercrd.Cluster) (string, error) {
-	return "", nil
+	apiCfg := api.Config{
+		Clusters: map[string]*api.Cluster{
+			"default": {
+				Server:                   cfg.Host,
+				InsecureSkipTLSVerify:    cfg.Insecure,
+				CertificateAuthorityData: cfg.CAData,
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			"default": {
+				ClientCertificateData: cfg.CertData,
+				ClientKeyData:         cfg.KeyData,
+			},
+		},
+		Contexts: map[string]*api.Context{
+			"default": {
+				Cluster:  "default",
+				AuthInfo: "default",
+			},
+		},
+		CurrentContext: "default",
+	}
+	kubeconfig, err := clientcmd.Write(apiCfg)
+	Expect(err).Should(BeNil())
+
+	if wantErr != nil {
+		return "", wantErr
+	}
+	return string(kubeconfig), nil
 }
 
 func (m mockSyncer) Logout() {}
