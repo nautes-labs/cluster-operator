@@ -53,6 +53,7 @@ var testEnv *envtest.Environment
 var mgr manager.Manager
 var ctx context.Context
 var cancel context.CancelFunc
+var logger = logf.Log.WithName("cluster-controller-test")
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -139,6 +140,7 @@ var _ = AfterSuite(func() {
 
 func WaitForCondition(target *clustercrd.Cluster, startTime time.Time, conditionType string) (*metav1.Condition, error) {
 	cluster := &clustercrd.Cluster{}
+	var lastConditionTime time.Time
 	var err error
 
 	for i := 0; i < 30; i++ {
@@ -157,13 +159,16 @@ func WaitForCondition(target *clustercrd.Cluster, startTime time.Time, condition
 		)
 
 		if len(conditions) != 0 {
-			if startTime.Before(conditions[0].LastTransitionTime.Time) {
+			lastConditionTime = conditions[0].LastTransitionTime.Time
+			// Avoid ending earlier than starting due to missing decimal points
+			if startTime.Before(lastConditionTime.Add(time.Second)) {
 				return &conditions[0], nil
 			}
 		}
 		time.Sleep(time.Second * 1)
 	}
 
+	logger.V(1).Info("wait for condition failed", "startTime", startTime, "lastConditionTime", lastConditionTime)
 	return nil, fmt.Errorf("wait for condition timeout")
 }
 
