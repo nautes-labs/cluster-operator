@@ -9,7 +9,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/hashicorp/vault/api v1.9.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.3.0
-	github.com/nautes-labs/pkg v0.2.2-0.20230522024442-d35e30879cfe
+	github.com/nautes-labs/pkg v0.3.0
 	github.com/onsi/ginkgo/v2 v2.3.1
 	github.com/onsi/gomega v1.22.0
 	google.golang.org/genproto v0.0.0-20220524023933-508584e28198
@@ -19,8 +19,6 @@ require (
 	k8s.io/client-go v0.24.2
 	sigs.k8s.io/controller-runtime v0.11.0
 )
-
-require github.com/pkg/errors v0.9.1 // indirect
 
 require (
 	cloud.google.com/go v0.81.0 // indirect
@@ -73,6 +71,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/lumberjack v0.0.0-20230119042236-215739b3bcdc // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.28.0 // indirect
