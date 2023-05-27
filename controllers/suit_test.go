@@ -29,6 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -51,6 +53,7 @@ var testEnv *envtest.Environment
 var mgr manager.Manager
 var ctx context.Context
 var cancel context.CancelFunc
+var logger = logf.Log.WithName("cluster-controller-test")
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -70,7 +73,8 @@ var _ = BeforeSuite(func() {
 		ErrorIfCRDPathMissing: true,
 	}
 
-	cfg, err := testEnv.Start()
+	var err error
+	cfg, err = testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
@@ -134,8 +138,9 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-func WaitForCondition(target *clustercrd.Cluster, startTime time.Time) (*metav1.Condition, error) {
+func WaitForCondition(target *clustercrd.Cluster, startTime time.Time, conditionType string) (*metav1.Condition, error) {
 	cluster := &clustercrd.Cluster{}
+	var lastConditionTime time.Time
 	var err error
 
 	for i := 0; i < 30; i++ {
@@ -149,18 +154,21 @@ func WaitForCondition(target *clustercrd.Cluster, startTime time.Time) (*metav1.
 
 		conditions := cluster.Status.GetConditions(
 			map[string]bool{
-				clusterConditionType: true,
+				conditionType: true,
 			},
 		)
 
 		if len(conditions) != 0 {
-			if startTime.Before(conditions[0].LastTransitionTime.Time) {
+			lastConditionTime = conditions[0].LastTransitionTime.Time
+			// Avoid ending earlier than starting due to missing decimal points
+			if startTime.Before(lastConditionTime.Add(time.Second)) {
 				return &conditions[0], nil
 			}
 		}
 		time.Sleep(time.Second * 1)
 	}
 
+	logger.V(1).Info("wait for condition failed", "startTime", startTime, "lastConditionTime", lastConditionTime)
 	return nil, fmt.Errorf("wait for condition timeout")
 }
 
@@ -200,3 +208,37 @@ func (m mockSyncer) Sync(ctx context.Context, cluster, lastCluster *clustercrd.C
 func (m mockSyncer) Delete(ctx context.Context, cluster *clustercrd.Cluster) error {
 	return wantErr
 }
+
+func (m mockSyncer) GetKubeConfig(ctx context.Context, cluster *clustercrd.Cluster) (string, error) {
+	apiCfg := api.Config{
+		Clusters: map[string]*api.Cluster{
+			"default": {
+				Server:                   cfg.Host,
+				InsecureSkipTLSVerify:    cfg.Insecure,
+				CertificateAuthorityData: cfg.CAData,
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			"default": {
+				ClientCertificateData: cfg.CertData,
+				ClientKeyData:         cfg.KeyData,
+			},
+		},
+		Contexts: map[string]*api.Context{
+			"default": {
+				Cluster:  "default",
+				AuthInfo: "default",
+			},
+		},
+		CurrentContext: "default",
+	}
+	kubeconfig, err := clientcmd.Write(apiCfg)
+	Expect(err).Should(BeNil())
+
+	if wantErr != nil {
+		return "", wantErr
+	}
+	return string(kubeconfig), nil
+}
+
+func (m mockSyncer) Logout() {}

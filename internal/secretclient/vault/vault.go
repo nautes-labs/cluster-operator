@@ -44,6 +44,7 @@ import (
 	vault "github.com/hashicorp/vault/api"
 	kubernetesauth "github.com/hashicorp/vault/api/auth/kubernetes"
 	kubeclient "github.com/nautes-labs/cluster-operator/internal/pkg/kubeclient"
+	vaultproxyv1 "github.com/nautes-labs/cluster-operator/internal/vaultproxy"
 	operatorerror "github.com/nautes-labs/cluster-operator/pkg/error"
 	secretclient "github.com/nautes-labs/cluster-operator/pkg/secretclient/interface"
 	clustercrd "github.com/nautes-labs/pkg/api/v1alpha1"
@@ -51,7 +52,6 @@ import (
 	nautesctx "github.com/nautes-labs/pkg/pkg/context"
 	kubeconvert "github.com/nautes-labs/pkg/pkg/kubeconvert"
 	configs "github.com/nautes-labs/pkg/pkg/nautesconfigs"
-	vaultproxyv1 "github.com/nautes-labs/vault-proxy/api/vaultproxy/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -210,6 +210,10 @@ func (vc *VaultClient) deleteSecret(cluster *nautescrd.Cluster) error {
 	}
 
 	clusterRequest := getClusterRequest(*cluster)
+	// kratos api input verify force to write something in Account key
+	clusterRequest.Account = &vaultproxyv1.ClusterAccount{
+		Kubeconfig: "avoid input check",
+	}
 	clusterMeta, err := clusterRequest.ConvertRequest()
 	if err != nil {
 		return err
@@ -258,9 +262,9 @@ func (vc *VaultClient) createAuth(cluster *nautescrd.Cluster) error {
 		clusterName := rawConfig.Contexts[rawConfig.CurrentContext].Cluster
 		cluster := rawConfig.Clusters[clusterName]
 		authReq.Kubernetes = &vaultproxyv1.Kubernetes{
-			Url:       cluster.Server,
-			Cabundle:  string(cluster.CertificateAuthorityData),
-			Usertoken: token,
+			Url:      cluster.Server,
+			Cabundle: string(cluster.CertificateAuthorityData),
+			Token:    token,
 		}
 		return nil
 	})
@@ -318,7 +322,7 @@ func (vc *VaultClient) createRole(cluster *nautescrd.Cluster) error {
 			Role: &vaultproxyv1.AuthroleRequest_K8S{
 				K8S: &vaultproxyv1.KubernetesAuthRoleMeta{
 					Namespaces:      vc.Configs.Nautes.Namespace,
-					Serviceaccounts: serviceAccountName,
+					ServiceAccounts: serviceAccountName,
 				},
 			},
 		}
@@ -356,11 +360,13 @@ func getClusterRequest(cluster nautescrd.Cluster, accounts ...clusterAccount) *v
 		clusterAccount = account.GetAccount()
 	}
 	clusterRequest := &vaultproxyv1.ClusterRequest{
-		Clustertype: "kubernetes",
-		Clusterid:   cluster.Name,
-		Username:    "default",
-		Permission:  "admin",
-		Account:     clusterAccount,
+		Meta: &vaultproxyv1.ClusterMeta{
+			Type:       "kubernetes",
+			Id:         cluster.Name,
+			Username:   "default",
+			Permission: "admin",
+		},
+		Account: clusterAccount,
 	}
 
 	return clusterRequest
@@ -394,11 +400,15 @@ func getGrantRequest(ctx context.Context, cluster nautescrd.Cluster, authName st
 	if !ok {
 		return nil, ErrorRoleNameNotFound(ROLE_NAME_KEY_RUNTIME)
 	}
-	clusterRequest := getClusterRequest(cluster)
 	return &vaultproxyv1.AuthroleClusterPolicyRequest{
-		ClusterName:   authName,
-		DestUser:      roleName,
-		SecretOptions: clusterRequest,
+		ClusterName: authName,
+		DestUser:    roleName,
+		Secret: &vaultproxyv1.ClusterMeta{
+			Type:       "kubernetes",
+			Id:         cluster.Name,
+			Username:   "default",
+			Permission: "admin",
+		},
 	}, nil
 }
 
@@ -468,16 +478,19 @@ func (vc *VaultClient) grantTenantPermission(ctx context.Context, cluster *clust
 	_, err = vc.VaultAuthGrant.GrantAuthroleGitPolicy(ctx, &vaultproxyv1.AuthroleGitPolicyRequest{
 		ClusterName: authName,
 		DestUser:    roleName,
-		SecretOptions: &vaultproxyv1.GitRequest{
-			Providertype: string(cfg.Git.GitType),
-			Repoid:       tenantCodeRepoID,
+		Secret: &vaultproxyv1.GitMeta{
+			ProviderType: string(cfg.Git.GitType),
+			Id:           tenantCodeRepoID,
 			Username:     "default",
 			Permission:   "readonly",
-			Account:      &vaultproxyv1.GitAccount{},
 		},
 	})
 
 	return err
+}
+
+func (vc *VaultClient) GetKubeConfig(ctx context.Context, cluster *nautescrd.Cluster) (string, error) {
+	return vc.getKubeConfig(*cluster)
 }
 
 func (vc *VaultClient) getKubeConfig(cluster nautescrd.Cluster) (string, error) {
@@ -645,7 +658,7 @@ func newVaultClient(vaultConfig configs.Vault, roleName string) (*vault.Client, 
 	return client, nil
 }
 
-func (vc *VaultClient) logout() {
+func (vc *VaultClient) Logout() {
 	err := vc.Vault.Auth().Token().RevokeSelf("")
 	if err != nil {
 		vc.log.Error(err, "clean up token failed")

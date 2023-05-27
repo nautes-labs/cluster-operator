@@ -26,6 +26,8 @@ type SecretClient interface {
 	Sync(ctx context.Context, cluster, lastCluster *clustercrd.Cluster) (*SyncResult, error)
 	// Clean up remote by giving cluster, this cluster is the last success record, not the current info.
 	Delete(ctx context.Context, cluster *clustercrd.Cluster) error
+	GetKubeConfig(ctx context.Context, cluster *clustercrd.Cluster) (string, error)
+	Logout()
 }
 
 type SyncResult struct {

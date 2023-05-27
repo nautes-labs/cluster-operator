@@ -17,7 +17,9 @@ package vault_test
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"testing"
+	"time"
 
 	vault "github.com/hashicorp/vault/api"
 	. "github.com/onsi/ginkgo/v2"
@@ -27,11 +29,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	vaultclient "github.com/nautes-labs/cluster-operator/internal/secretclient/vault"
+	vproxy "github.com/nautes-labs/cluster-operator/internal/vaultproxy"
 	kubeClientMock "github.com/nautes-labs/cluster-operator/mock/kubeclient"
 	vproxyMock "github.com/nautes-labs/cluster-operator/mock/vaultproxy"
 	nautescrd "github.com/nautes-labs/pkg/api/v1alpha1"
 	configs "github.com/nautes-labs/pkg/pkg/nautesconfigs"
-	vproxy "github.com/nautes-labs/vault-proxy/api/vaultproxy/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,6 +60,7 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var tenantName = "dev-tenant"
 var tenantCodeRepoName = "repo-01"
+var logger = logf.Log.WithName("vault-client-test")
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
@@ -97,11 +100,31 @@ var _ = BeforeSuite(func() {
 	err = k8sClient.Create(context.Background(), tenantCodeRepo)
 	Expect(err).NotTo(HaveOccurred())
 
+	vaultCfg := vault.DefaultConfig()
+	vaultCfg.Address = "http://127.0.0.1:8200"
+
+	vaultRootClient, err = vault.NewClient(vaultCfg)
+	Expect(err).Should(BeNil())
+	vaultRootClient.SetToken("test")
+
+	vaultServer = exec.Command("vault", "server", "-dev", "-dev-root-token-id=test")
+	err = vaultServer.Start()
+	Expect(err).Should(BeNil())
+
+	for {
+		vaultServerHealthCheck := exec.Command("vault", "status", "-address=http://127.0.0.1:8200")
+		err := vaultServerHealthCheck.Run()
+		if err == nil {
+			break
+		}
+	}
 })
 
 var _ = AfterSuite(func() {
+	err := vaultServer.Process.Kill()
+	Expect(err).NotTo(HaveOccurred())
 	By("tearing down the test environment")
-	err := testEnv.Stop()
+	err = testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -116,10 +139,13 @@ func initMock() {
 				"kubeconfig": req.GetAccount().Kubeconfig,
 			})
 			Expect(err).Should(BeNil())
+
 			return &vproxy.CreateClusterReply{
-				SecretName:    cluster.SecretName,
-				SecretPath:    cluster.SecretPath,
-				SecretVersion: int32(sec.VersionMetadata.Version),
+				Secret: &vproxy.SecretInfo{
+					Name:    cluster.SecretName,
+					Path:    cluster.SecretPath,
+					Version: int32(sec.VersionMetadata.Version),
+				},
 			}, nil
 		})
 	secClient.EXPECT().DeleteCluster(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
@@ -148,7 +174,7 @@ func initMock() {
 			opts := map[string]interface{}{
 				"kubernetes_host":    req.Kubernetes.Url,
 				"kubernetes_ca_cert": req.Kubernetes.Cabundle,
-				"token_reviewer_jwt": req.Kubernetes.Usertoken,
+				"token_reviewer_jwt": req.Kubernetes.Token,
 			}
 			_, err = vaultRawClient.Logical().Write(configPath, opts)
 			Expect(err).Should(BeNil())
@@ -167,7 +193,7 @@ func initMock() {
 			path := fmt.Sprintf("auth/%s/role/%s", req.ClusterName, req.DestUser)
 			opts := map[string]interface{}{
 				"bound_service_account_namespaces": req.GetK8S().Namespaces,
-				"bound_service_account_names":      req.GetK8S().Serviceaccounts,
+				"bound_service_account_names":      req.GetK8S().ServiceAccounts,
 			}
 			_, err := vaultRawClient.Logical().Write(path, opts)
 			Expect(err).Should(BeNil())
@@ -406,13 +432,33 @@ secret:
 }
 
 func initVault(data, roleBinding map[string]interface{}) {
-	_, err := vaultRootClient.KVv2(CLUSTER).Put(ctx, "kubernetes/host/default/admin", data)
+	err := watiForSecretEngineInit()
+	Expect(err).Should(BeNil())
+	_, err = vaultRootClient.KVv2(CLUSTER).Put(ctx, "kubernetes/host/default/admin", data)
 	Expect(err).Should(BeNil())
 	err = vaultRootClient.Sys().EnableAuthWithOptions(parentCluster.Name, &vault.MountInput{Type: "kubernetes"})
 	Expect(err).Should(BeNil())
 	_, err = vaultRootClient.Logical().Write(fmt.Sprintf("auth/%s/role/RUNTIME", parentCluster.Name), roleBinding)
 	Expect(err).Should(BeNil())
+}
 
+func cleanVault() {
+	err := vaultRootClient.Sys().Unmount(CLUSTER)
+	Expect(err).Should(BeNil())
+	err = vaultRootClient.Sys().DisableAuth(parentCluster.Name)
+	Expect(err).Should(BeNil())
+}
+
+func watiForSecretEngineInit() error {
+	for i := 0; i < 5; i++ {
+		_, err := vaultRootClient.KVv2(CLUSTER).Put(ctx, "wait-for-start", map[string]interface{}{"test": "test"})
+		if err == nil {
+			return nil
+		}
+		logger.V(1).Info("try to put secret failed", "error", err.Error())
+		time.Sleep(time.Second * 3)
+	}
+	return fmt.Errorf("wait for secret engine start timeout")
 }
 
 func initK8SCreateMock() {

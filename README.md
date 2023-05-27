@@ -1,7 +1,7 @@
 # Cluster Operator
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![golang](https://img.shields.io/badge/golang-v1.17.13-brightgreen)](https://go.dev/doc/install)
-[![version](https://img.shields.io/badge/version-v0.2.0-green)]()
+[![version](https://img.shields.io/badge/version-v0.3.0-green)]()
 
 Cluster Operator 项目提供了一个用于调谐 Cluster 资源事件的 Controller，调谐内容主要是管理 Cluster 资源所声明的 Kubernetes 集群的密钥信息，使参与集群管理的其他组件可以从租户的密钥管理系统中正确获取到集群的密钥。
 
@@ -14,7 +14,7 @@ Cluster Operator 项目提供了一个用于调谐 Cluster 资源事件的 Contr
 |            | 物理集群                                                     | 虚拟集群                                                     |
 | ---------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | 宿主集群   | 不处理                                                       | 不支持                                                       |
-| 运行时集群 | 在密钥管理系统中创建物理集群的认证、将物理集群的密钥授权给 Runtime Operator、将租户配置库的密钥授权给物理集群的 Argo Operator | 将从虚拟集群所属的宿主集群中获取的密钥写入密钥管理系统、在密钥管理系统中创建虚拟集群的认证、将虚拟集群的密钥授权给 Runtime Operator、将租户配置库的密钥授权给虚拟集群的 Argo Operator |
+| 运行时集群 | 在密钥管理系统中创建物理集群的认证、将物理集群的密钥授权给 Runtime Operator、将租户配置库的密钥授权给物理集群的 Argo Operator、收集集群中可以作为环境入口的k8s服务的端口号 | 将从虚拟集群所属的宿主集群中获取的密钥写入密钥管理系统、在密钥管理系统中创建虚拟集群的认证、将虚拟集群的密钥授权给 Runtime Operator、将租户配置库的密钥授权给虚拟集群的 Argo Operator、收集宿主集群中可以作为环境入口的k8s服务的端口号 |
 
 ### 删除集群
 
@@ -73,6 +73,5 @@ go install github.com/onsi/ginkgo/v2/ginkgo@v2.3.1
 执行单元测试
 
 ```shell
-ginkgo -r
+make test
 ```
-

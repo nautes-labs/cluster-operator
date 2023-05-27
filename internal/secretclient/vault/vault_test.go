@@ -48,34 +48,12 @@ func setVaultToken() {
 	vaultRawClient, err = vault.NewClient(vaultCfg)
 	Expect(err).Should(BeNil())
 	vaultRawClient.SetToken(token.Auth.ClientToken)
-
 }
 
 var _ = Describe("VaultStore", func() {
 	var tenantRepoPolicy string
 	BeforeEach(func() {
 		var err error
-		vaultCfg := vault.DefaultConfig()
-		vaultCfg.Address = "http://127.0.0.1:8200"
-
-		vaultRootClient, err = vault.NewClient(vaultCfg)
-		Expect(err).Should(BeNil())
-		vaultRootClient.SetToken("test")
-
-		vaultServer = exec.Command("vault", "server", "-dev", "-dev-root-token-id=test")
-		err = vaultServer.Start()
-		Expect(err).Should(BeNil())
-
-		for {
-			vaultServerHealthCheck := exec.Command("vault", "status", "-address=http://127.0.0.1:8200")
-			err := vaultServerHealthCheck.Run()
-			if err == nil {
-				break
-			}
-		}
-
-		setVaultToken()
-
 		mountPath := CLUSTER
 		mountInput := &vault.MountInput{
 			Type:                  "kv",
@@ -87,7 +65,10 @@ var _ = Describe("VaultStore", func() {
 			Options:               map[string]string{"version": "2"},
 			PluginName:            "",
 		}
-		vaultRawClient.Sys().Mount(mountPath, mountInput)
+
+		setVaultToken()
+		err = vaultRawClient.Sys().Mount(mountPath, mountInput)
+		Expect(err).Should(BeNil())
 
 		tenantRepoPolicy = fmt.Sprintf("github-%s-default-readonly", tenantCodeRepoName)
 
@@ -96,8 +77,7 @@ var _ = Describe("VaultStore", func() {
 	})
 
 	AfterEach(func() {
-		err := vaultServer.Process.Kill()
-		Expect(err).NotTo(HaveOccurred())
+		cleanVault()
 	})
 
 	Describe("when a new cluster", func() {
