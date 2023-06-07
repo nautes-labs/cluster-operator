@@ -492,6 +492,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRW
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
 github.com/natefinch/lumberjack v0.0.0-20230119042236-215739b3bcdc h1:hNf3PQJIbtEZmcUP0G0wRUSD/ykrMpbEcWW890yheFI=
 github.com/natefinch/lumberjack v0.0.0-20230119042236-215739b3bcdc/go.mod h1:IGq9BXcNgiy9zAl4g4nzA04fzbMjmQpOAfHxkVTKE9o=
+github.com/nautes-labs/pkg v0.3.0-local.0.20230607082133-71b003549f8c h1:Fl6pQvTTpDy6UK+e+ziqzIGMHhaWem/06wjIJHtSkLY=
+github.com/nautes-labs/pkg v0.3.0-local.0.20230607082133-71b003549f8c/go.mod h1:qT3YxKHvrAzeELExmkryPf3HUe9W0hnKLjTJTWTY14U=
 github.com/nautes-labs/pkg v0.3.0 h1:Uy+mPCed2t1Hv4NyHPp+2y07+jXo/0TVmMpM8AC9zxo=
 github.com/nautes-labs/pkg v0.3.0/go.mod h1:qT3YxKHvrAzeELExmkryPf3HUe9W0hnKLjTJTWTY14U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=

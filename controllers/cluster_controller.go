@@ -61,6 +61,9 @@ type ClusterReconciler struct {
 //+kubebuilder:rbac:groups=nautes.resource.nautes.io,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=nautes.resource.nautes.io,resources=clusters/finalizers,verbs=update
 //+kubebuilder:rbac:groups=nautes.resource.nautes.io,resources=coderepoes,verbs=get;list;watch
+//+kubebuilder:rbac:groups=nautes.resource.nautes.io,resources=environments,verbs=get;list;watch
+//+kubebuilder:rbac:groups=nautes.resource.nautes.io,resources=deploymentruntimes,verbs=get;list;watch
+//+kubebuilder:rbac:groups=nautes.resource.nautes.io,resources=projectpipelineruntimes,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -91,17 +94,11 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	if err := isLegal(cluster); err != nil {
-		setStatus(cluster, nil, err)
-		if err := r.Status().Update(ctx, cluster); err != nil {
+	if !controllerutil.ContainsFinalizer(cluster, clusterFinalizerName) {
+		controllerutil.AddFinalizer(cluster, clusterFinalizerName)
+		if err := r.Update(ctx, cluster); err != nil {
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, err
-	}
-
-	controllerutil.AddFinalizer(cluster, clusterFinalizerName)
-	if err := r.Update(ctx, cluster); err != nil {
-		return ctrl.Result{}, err
 	}
 
 	result, err := r.syncCluster(ctx, *cluster)
@@ -299,6 +296,10 @@ func (r *ClusterReconciler) syncCluster(ctx context.Context, cluster clustercrd.
 		return nil, err
 	}
 
+	if err := cluster.ValidateCluster(ctx, lastCluster, r.Client, false); err != nil {
+		return nil, err
+	}
+
 	secretClient, err := r.newSecretClient(ctx)
 	if err != nil {
 		return nil, err
@@ -318,6 +319,10 @@ func (r *ClusterReconciler) syncCluster(ctx context.Context, cluster clustercrd.
 func (r *ClusterReconciler) deleteCluster(ctx context.Context, cluster clustercrd.Cluster) error {
 	if !controllerutil.ContainsFinalizer(&cluster, clusterFinalizerName) {
 		return nil
+	}
+
+	if err := cluster.ValidateCluster(ctx, nil, r.Client, true); err != nil {
+		return err
 	}
 
 	lastCluster, err := getSyncHistory(&cluster)
@@ -348,15 +353,6 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, key types.Namespac
 	setStatus(cluster)
 
 	return r.Status().Update(ctx, cluster)
-}
-
-func isLegal(cluster *clustercrd.Cluster) error {
-	lastCluster, err := getSyncHistory(cluster)
-	if err != nil {
-		return err
-	}
-
-	return clustercrd.ValidateCluster(cluster, lastCluster, false)
 }
 
 func setStatus(cluster *clustercrd.Cluster, result *clustercrd.MgtClusterAuthStatus, err error) {
