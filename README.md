@@ -1,7 +1,7 @@
 # Cluster Operator
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![golang](https://img.shields.io/badge/golang-v1.17.13-brightgreen)](https://go.dev/doc/install)
-[![version](https://img.shields.io/badge/version-v0.3.0-green)]()
+[![version](https://img.shields.io/badge/version-v0.3.1-green)]()
 
 Cluster Operator 项目提供了一个用于调谐 Cluster 资源事件的 Controller，调谐内容主要是管理 Cluster 资源所声明的 Kubernetes 集群的密钥信息，使参与集群管理的其他组件可以从租户的密钥管理系统中正确获取到集群的密钥。
 
