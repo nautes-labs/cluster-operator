@@ -14,7 +14,7 @@
 
 // +kubebuilder:skip
 
-//Package vault is a secret client to save cluster info to vault
+// Package vault is a secret client to save cluster info to vault
 package vault
 
 import (

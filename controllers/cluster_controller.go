@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//Package controllers use to set k8s cluster info to secret store
+// Package controllers use to set k8s cluster info to secret store
 package controllers
 
 import (
