@@ -1,7 +1,7 @@
 # Cluster Operator
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![golang](https://img.shields.io/badge/golang-v1.17.13-brightgreen)](https://go.dev/doc/install)
-[![version](https://img.shields.io/badge/version-v0.3.1-green)]()
+[![golang](https://img.shields.io/badge/golang-v1.20.5-brightgreen)](https://go.dev/doc/install)
+[![version](https://img.shields.io/badge/version-v0.3.2-green)]()
 
 Cluster Operator 项目提供了一个用于调谐 Cluster 资源事件的 Controller，调谐内容主要是管理 Cluster 资源所声明的 Kubernetes 集群的密钥信息，使参与集群管理的其他组件可以从租户的密钥管理系统中正确获取到集群的密钥。
 
@@ -37,7 +37,7 @@ Cluster Operator 项目提供了一个用于调谐 Cluster 资源事件的 Contr
 ### 构建
 
 ```shell
-go mod tidy -go=1.16 && go mod tidy -go=1.17
+go mod tidy
 go build -o manager main.go
 ```
 
@@ -47,14 +47,6 @@ go build -o manager main.go
 ```
 
 ### 单元测试
-
-安装 Envtest
-
-```shell
-go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-setup-envtest use 1.21.x
-export KUBEBUILDER_ASSETS=$HOME/.local/share/kubebuilder-envtest/k8s/1.21.4-linux-amd64
-```
 
 安装 Vault
 
@@ -67,7 +59,7 @@ sudo mv vault /usr/local/bin/
 安装 Ginkgo
 
 ```shell
-go install github.com/onsi/ginkgo/v2/ginkgo@v2.3.1
+go install github.com/onsi/ginkgo/v2/ginkgo@v2.10.0
 ```
 
 执行单元测试
