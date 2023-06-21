@@ -9,7 +9,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/hashicorp/vault/api v1.9.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.3.0
-	github.com/nautes-labs/pkg v0.3.2
+	github.com/nautes-labs/pkg v0.3.3
 	github.com/onsi/ginkgo/v2 v2.10.0
 	github.com/onsi/gomega v1.27.7
 	google.golang.org/genproto v0.0.0-20220524023933-508584e28198
