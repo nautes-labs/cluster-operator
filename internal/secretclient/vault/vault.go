@@ -319,10 +319,10 @@ func (vc *VaultClient) createRole(cluster *nautescrd.Cluster) error {
 		roleRequest := &vaultproxyv1.AuthroleRequest{
 			ClusterName: cluster.Name,
 			DestUser:    roleName,
-			Role: &vaultproxyv1.AuthroleRequest_K8S{
-				K8S: &vaultproxyv1.KubernetesAuthRoleMeta{
-					Namespaces:      vc.Configs.Nautes.Namespace,
-					ServiceAccounts: serviceAccountName,
+			Role: &vaultproxyv1.AuthroleRequest_Kubernetes{
+				Kubernetes: &vaultproxyv1.KubernetesAuthRoleMeta{
+					Namespaces:      []string{vc.Configs.Nautes.Namespace},
+					ServiceAccounts: []string{serviceAccountName},
 				},
 			},
 		}
