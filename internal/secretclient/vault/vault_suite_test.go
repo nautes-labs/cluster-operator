@@ -192,8 +192,8 @@ func initMock() {
 		func(ctx context.Context, req *vproxy.AuthroleRequest) (*vproxy.CreateAuthReply, error) {
 			path := fmt.Sprintf("auth/%s/role/%s", req.ClusterName, req.DestUser)
 			opts := map[string]interface{}{
-				"bound_service_account_namespaces": req.GetK8S().Namespaces,
-				"bound_service_account_names":      req.GetK8S().ServiceAccounts,
+				"bound_service_account_namespaces": req.GetKubernetes().Namespaces,
+				"bound_service_account_names":      req.GetKubernetes().ServiceAccounts,
 			}
 			_, err := vaultRawClient.Logical().Write(path, opts)
 			Expect(err).Should(BeNil())

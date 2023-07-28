@@ -348,6 +348,8 @@ github.com/nautes-labs/pkg v0.3.2 h1:Dp+jcW49vyZSLuxP/vIKjRnQE30eRIu3w+Mb75qu9o4
 github.com/nautes-labs/pkg v0.3.2/go.mod h1:u8Zni0Jy9uzjNv/PWQ6xGNFGQVAhECP7h2HPY9xi9Ks=
 github.com/nautes-labs/pkg v0.3.3 h1:HixgtY53lt4sFOiK2GoTdbvuWO7L7E4ohL1C58Ypjxo=
 github.com/nautes-labs/pkg v0.3.3/go.mod h1:u8Zni0Jy9uzjNv/PWQ6xGNFGQVAhECP7h2HPY9xi9Ks=
+github.com/nautes-labs/pkg v0.3.6 h1:v415TrKc7V/+mvddc+KK2QWjLMU+gpZ5M+oZG+ojQzU=
+github.com/nautes-labs/pkg v0.3.6/go.mod h1:u8Zni0Jy9uzjNv/PWQ6xGNFGQVAhECP7h2HPY9xi9Ks=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/onsi/ginkgo/v2 v2.10.0 h1:sfUl4qgLdvkChZrWCYndY2EAu9BRIw1YphNAzy1VNWs=
