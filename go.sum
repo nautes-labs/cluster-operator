@@ -354,6 +354,8 @@ github.com/nautes-labs/pkg v0.3.4-0.20230721021338-6c6d7e6ed549 h1:q8G0V2YQrdhf8
 github.com/nautes-labs/pkg v0.3.4-0.20230721021338-6c6d7e6ed549/go.mod h1:u8Zni0Jy9uzjNv/PWQ6xGNFGQVAhECP7h2HPY9xi9Ks=
 github.com/nautes-labs/pkg v0.3.4-0.20230722084337-0379d5e24b33 h1:V809eppJvSeE5TnE+iI7/UoyMh2vcULX6aUahp+NwpE=
 github.com/nautes-labs/pkg v0.3.4-0.20230722084337-0379d5e24b33/go.mod h1:u8Zni0Jy9uzjNv/PWQ6xGNFGQVAhECP7h2HPY9xi9Ks=
+github.com/nautes-labs/pkg v0.3.6 h1:v415TrKc7V/+mvddc+KK2QWjLMU+gpZ5M+oZG+ojQzU=
+github.com/nautes-labs/pkg v0.3.6/go.mod h1:u8Zni0Jy9uzjNv/PWQ6xGNFGQVAhECP7h2HPY9xi9Ks=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/onsi/ginkgo/v2 v2.10.0 h1:sfUl4qgLdvkChZrWCYndY2EAu9BRIw1YphNAzy1VNWs=
