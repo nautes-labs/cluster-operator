@@ -3,6 +3,7 @@
 [![golang](https://img.shields.io/badge/golang-v1.20.5-brightgreen)](https://go.dev/doc/install)
 [![version](https://img.shields.io/badge/version-v0.3.6-green)]()
 
+⚠️**该代码库已停止更新，并将在未来的某个时间被移除，其代码已被合并至 [Nautes](https://github.com/nautes-labs/nautes)。**
 
 Cluster Operator 项目提供了一个用于调谐 Cluster 资源事件的 Controller，调谐内容主要是管理 Cluster 资源所声明的 Kubernetes 集群的密钥信息，使参与集群管理的其他组件可以从租户的密钥管理系统中正确获取到集群的密钥。
 
